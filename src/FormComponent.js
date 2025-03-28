@@ -1,125 +1,65 @@
-import React from 'react';
+// FormComponent.js
+import React, { useState } from 'react';
+import PlacesAutocomplete, { geocodeByAddress, getLatLng } from 'react-places-autocomplete';
+import { applianceCategories, batteryTypes } from './constants';
+import { Tooltip } from 'react-tooltip'; // Updated import to named export
 
 function FormComponent({
+  preciseLocation,
+  setPreciseLocation,
   consumptionMethod,
   setConsumptionMethod,
   billAmount,
   setBillAmount,
-  roofSize,
-  setRoofSize,
-  handleCalculate,
-  location,
-  setLocation,
   householdSize,
   setHouseholdSize,
   selectedAppliances,
   setSelectedAppliances,
+  roofSize,
+  setRoofSize,
   shadingPercentage,
   setShadingPercentage,
   systemType,
   setSystemType,
-  batteryAutonomy,
-  setBatteryAutonomy,
   batteryType,
   setBatteryType,
-  panelQuality,
-  setPanelQuality,
 }) {
-  // Define default appliance data (could be moved to a constants file later)
-  const applianceDefaults = {
-    Fridge: { power: 150, hours: 24 },
-    TV: { power: 100, hours: 4 },
-    Lights: { power: 10, hours: 5 },
-    Fan: { power: 50, hours: 3 },
-  };
+  const [address, setAddress] = useState(preciseLocation.address);
 
-  const appliances = Object.keys(applianceDefaults);
+  // Handle address selection and geocode to lat/lng
+  const handleSelect = async (selected) => {
+    const results = await geocodeByAddress(selected);
+    const latLng = await getLatLng(results[0]);
+    setPreciseLocation({ address: selected, lat: latLng.lat, lng: latLng.lng });
+    setAddress(selected);
+  };
 
   return (
     <div className="form">
       <h2>Enter Your Details</h2>
 
-      {/* Location Input */}
+      {/* Precise Location Input */}
       <label>
         Location:
-        <input
-          type="text"
-          value={location}
-          onChange={(e) => setLocation(e.target.value)}
-          placeholder="Enter your location"
-        />
+        <PlacesAutocomplete value={address} onChange={setAddress} onSelect={handleSelect}>
+          {({ getInputProps, suggestions, getSuggestionItemProps, loading }) => (
+            <div>
+              <input {...getInputProps({ placeholder: 'Enter your address' })} />
+              <div className="suggestions">
+                {loading && <div>Loading...</div>}
+                {suggestions.map((suggestion) => (
+                  <div {...getSuggestionItemProps(suggestion)} key={suggestion.placeId}>
+                    {suggestion.description}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </PlacesAutocomplete>
+        <span data-tooltip-id="info-tooltip" data-tooltip-content="Enter your exact address for accurate solar data">ℹ️</span>
       </label>
 
-      {/* Consumption Method Selection */}
-      <label>
-        Choose Energy Consumption Estimation Method:
-        <select
-          value={consumptionMethod}
-          onChange={(e) => setConsumptionMethod(e.target.value)}
-        >
-          <option value="bill">Monthly Bill</option>
-          <option value="household">Household Size</option>
-          <option value="appliances">Appliances</option>
-        </select>
-      </label>
-
-      {/* Conditional Inputs Based on Consumption Method */}
-      {consumptionMethod === 'bill' && (
-        <label>
-          Monthly Bill (KSh):
-          <input
-            type="number"
-            value={billAmount}
-            onChange={(e) => setBillAmount(e.target.value)}
-            min="0"
-          />
-        </label>
-      )}
-
-      {consumptionMethod === 'household' && (
-        <label>
-          Household Size (number of people):
-          <input
-            type="number"
-            value={householdSize}
-            onChange={(e) => setHouseholdSize(e.target.value)}
-            min="1"
-          />
-        </label>
-      )}
-
-      {consumptionMethod === 'appliances' && (
-        <div>
-          <label>Appliances:</label>
-          {appliances.map((appliance) => (
-            <label key={appliance} style={{ display: 'block' }}>
-              <input
-                type="checkbox"
-                checked={selectedAppliances.some((a) => a.name === appliance)}
-                onChange={(e) => {
-                  const checked = e.target.checked;
-                  if (checked) {
-                    setSelectedAppliances([
-                      ...selectedAppliances,
-                      { name: appliance, ...applianceDefaults[appliance] },
-                    ]);
-                  } else {
-                    setSelectedAppliances(
-                      selectedAppliances.filter((a) => a.name !== appliance)
-                    );
-                  }
-                }}
-              />
-              {appliance}
-            </label>
-          ))}
-        </div>
-      )}
-
-      {/* Note for Users Without a Bill */}
-      <p>No bill? Use Household Size or Appliances instead.</p>
-
-      {/* Roof Size Input */}
+      {/* Roof Size */}
       <label>
         Roof Size (sqm):
         <input
@@ -128,75 +68,142 @@ function FormComponent({
           onChange={(e) => setRoofSize(e.target.value)}
           min="0"
         />
+        <span data-tooltip-id="info-tooltip" data-tooltip-content="Area available for solar panels">ℹ️</span>
       </label>
 
-      {/* Shading Percentage Slider */}
+      {/* Shading Percentage */}
       <label>
-        Shading Percentage (%):
+        Shading Percentage:
         <input
-          type="range"
+          type="number"
           min="0"
           max="100"
           value={shadingPercentage}
           onChange={(e) => setShadingPercentage(e.target.value)}
         />
-        <span>{shadingPercentage}%</span>
+        {shadingPercentage > 20 && (
+          <p style={{ color: 'red' }}>
+            Shading above 20% may reduce efficiency. Consider trimming trees or ground mounting.
+          </p>
+        )}
+        <span data-tooltip-id="info-tooltip" data-tooltip-content="Percentage of roof shaded during peak sun hours">ℹ️</span>
       </label>
 
-      {/* System Type Selection */}
+      {/* Consumption Method */}
       <label>
-        System Type:
-        <select
-          value={systemType}
-          onChange={(e) => setSystemType(e.target.value)}
-        >
-          <option value="Grid-Tied">Grid-Tied</option>
-          <option value="Off-Grid">Off-Grid</option>
-          <option value="Hybrid">Hybrid</option>
+        Consumption Method:
+        <select value={consumptionMethod} onChange={(e) => setConsumptionMethod(e.target.value)}>
+          <option value="bill">Monthly Bill</option>
+          <option value="household">Household Size</option>
+          <option value="appliances">Appliances</option>
         </select>
+        <span data-tooltip-id="info-tooltip" data-tooltip-content="How to estimate your energy use">ℹ️</span>
       </label>
 
-      {/* Battery Fields (Shown for Off-Grid or Hybrid Systems) */}
-      {(systemType === 'Off-Grid' || systemType === 'Hybrid') && (
-        <>
-          <label>
-            Battery Autonomy (days):
-            <input
-              type="number"
-              min="1"
-              max="5"
-              value={batteryAutonomy}
-              onChange={(e) => setBatteryAutonomy(e.target.value)}
-            />
-          </label>
-          <label>
-            Battery Type:
-            <select
-              value={batteryType}
-              onChange={(e) => setBatteryType(e.target.value)}
-            >
-              <option value="Lead-Acid">Lead-Acid</option>
-              <option value="Lithium-Ion">Lithium-Ion</option>
-            </select>
-          </label>
-        </>
+      {consumptionMethod === 'bill' && (
+        <label>
+          Monthly Bill (KSh):
+          <input type="number" value={billAmount} onChange={(e) => setBillAmount(e.target.value)} min="0" />
+        </label>
+      )}
+      {consumptionMethod === 'household' && (
+        <label>
+          Household Size (people):
+          <input type="number" value={householdSize} onChange={(e) => setHouseholdSize(e.target.value)} min="0" />
+        </label>
       )}
 
-      {/* Panel Quality Slider */}
+      {/* Appliance List with Counts */}
+      {consumptionMethod === 'appliances' && (
+        <div>
+          <h3>Select Appliances</h3>
+          {applianceCategories.map((cat) => (
+            <div key={cat.category}>
+              <h4>{cat.category}</h4>
+              {cat.appliances.map((appliance) => (
+                <div key={appliance.name}>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={selectedAppliances.some((a) => a.name === appliance.name)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedAppliances([
+                            ...selectedAppliances,
+                            { ...appliance, quantity: 1, hours: appliance.defaultHours },
+                          ]);
+                        } else {
+                          setSelectedAppliances(selectedAppliances.filter((a) => a.name !== appliance.name));
+                        }
+                      }}
+                    />
+                    {appliance.name} ({appliance.power} W)
+                  </label>
+                  {selectedAppliances.some((a) => a.name === appliance.name) && (
+                    <div>
+                      <label>
+                        Quantity:
+                        <input
+                          type="number"
+                          min="1"
+                          value={selectedAppliances.find((a) => a.name === appliance.name).quantity}
+                          onChange={(e) => {
+                            const qty = parseInt(e.target.value) || 1;
+                            setSelectedAppliances(selectedAppliances.map((a) =>
+                              a.name === appliance.name ? { ...a, quantity: qty } : a
+                            ));
+                          }}
+                        />
+                      </label>
+                      <label>
+                        Hours per Day:
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.1"
+                          value={selectedAppliances.find((a) => a.name === appliance.name).hours}
+                          onChange={(e) => {
+                            const hours = parseFloat(e.target.value) || appliance.defaultHours;
+                            setSelectedAppliances(selectedAppliances.map((a) =>
+                              a.name === appliance.name ? { ...a, hours } : a
+                            ));
+                          }}
+                        />
+                      </label>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* System Type */}
       <label>
-        Panel Quality (KSh/W):
-        <input
-          type="range"
-          min="20"
-          max="100"
-          value={panelQuality}
-          onChange={(e) => setPanelQuality(e.target.value)}
-        />
-        <span>{panelQuality} KSh/W</span>
+        System Type:
+        <select value={systemType} onChange={(e) => setSystemType(e.target.value)}>
+          <option value="grid-tied">Grid-Tied</option>
+          <option value="off-grid">Off-Grid</option>
+          <option value="hybrid">Hybrid</option>
+        </select>
+        <span data-tooltip-id="info-tooltip" data-tooltip-content="Type of solar system">ℹ️</span>
       </label>
 
-      {/* Calculate Button */}
-      <button onClick={handleCalculate}>Calculate</button>
+      {/* Battery Type */}
+      <label>
+        Battery Type:
+        <select value={batteryType} onChange={(e) => setBatteryType(e.target.value)}>
+          {batteryTypes.map((type) => (
+            <option key={type.value} value={type.value}>{type.label}</option>
+          ))}
+        </select>
+        <p>{batteryTypes.find((t) => t.value === batteryType).description}</p>
+        <span data-tooltip-id="info-tooltip" data-tooltip-content="Choose a battery type based on your needs">ℹ️</span>
+      </label>
+
+      {/* Single Tooltip component for all tooltips */}
+      <Tooltip id="info-tooltip" />
     </div>
   );
 }

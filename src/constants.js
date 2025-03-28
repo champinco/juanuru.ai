@@ -1,43 +1,51 @@
 // constants.js
+export const gridRate = 25; // KSh per kWh, typical rate in Kenya
 
-// Grid electricity rate
-export const gridRate = 25; // KSh per kWh
-
-// Average peak sun hours per day (based on typical conditions in Kenya)
-export const peakSunHours = 5; // hours per day
-
-// List of common appliances with default power (watts) and usage hours per day
-export const appliances = [
-  { name: 'Fridge', power: 150, hours: 24 },
-  { name: 'TV', power: 100, hours: 4 },
-  { name: 'Lights', power: 10, hours: 5 },
-  { name: 'Fan', power: 50, hours: 3 },
-  // Add more appliances as needed
+// Categorized appliance list with power (watts) and default daily usage hours
+export const applianceCategories = [
+  {
+    category: 'Lighting',
+    appliances: [
+      { name: 'LED Bulb', power: 10, defaultHours: 5 },
+      { name: 'Fluorescent Tube', power: 40, defaultHours: 5 },
+    ],
+  },
+  {
+    category: 'Kitchen',
+    appliances: [
+      { name: 'Refrigerator', power: 150, defaultHours: 24 },
+      { name: 'Microwave', power: 1000, defaultHours: 0.5 },
+      { name: 'Electric Oven', power: 2400, defaultHours: 1 },
+    ],
+  },
+  {
+    category: 'Entertainment',
+    appliances: [
+      { name: 'TV', power: 100, defaultHours: 4 },
+      { name: 'Sound System', power: 200, defaultHours: 2 },
+    ],
+  },
+  {
+    category: 'Office',
+    appliances: [
+      { name: 'Computer', power: 200, defaultHours: 8 },
+      { name: 'Printer', power: 500, defaultHours: 1 },
+    ],
+  },
+  {
+    category: 'Industrial',
+    appliances: [
+      { name: 'Industrial Motor', power: 10000, defaultHours: 8 },
+      { name: 'Air Conditioner', power: 1500, defaultHours: 8 },
+    ],
+  },
 ];
 
-// Available system types for solar installations
-export const systemTypes = ['Grid-Tied', 'Off-Grid', 'Hybrid'];
+// Battery types with descriptions for user understanding
+export const batteryTypes = [
+  { value: 'lead-acid', label: 'Lead-Acid', description: 'Affordable, shorter lifespan, lower efficiency.' },
+  { value: 'lithium-ion', label: 'Lithium-Ion', description: 'Longer lifespan, higher efficiency, higher cost.' },
+];
 
-// Available battery types for storage options
-export const batteryTypes = ['Lead-Acid', 'Lithium-Ion'];
-
-// Panel quality cost range (used for sliders or inputs)
-export const panelQualityMin = 20; // KSh/W
-export const panelQualityMax = 100; // KSh/W
-
-// Shading percentage range (used for environmental adjustments)
-export const shadingMin = 0; // %
-export const shadingMax = 100; // %
-
-// Cost per kilowatt for the solar system
-export const costPerKW = 100000; // KSh per kW
-
-// Annual maintenance rate as a percentage of initial cost
-export const maintenanceRate = 0.02; // 2%
-
-// Estimated daily energy consumption per person for household size method
-export const kWhPerPersonPerDay = 2; // kWh
-
-// Battery autonomy range (days of storage capacity)
-export const batteryAutonomyMin = 1; // days
-export const batteryAutonomyMax = 5; // days
+export const costPerKW = 100000; // KSh per kW, approximate solar system cost
+export const systemLifespan = 20; // Years, typical solar system lifespan
